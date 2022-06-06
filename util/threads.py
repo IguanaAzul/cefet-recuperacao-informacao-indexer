@@ -1,5 +1,6 @@
 import threading
-#código obtido de: http://theorangeduck.com/page/synchronized-python
+
+# código obtido de: http://theorangeduck.com/page/synchronized-python
 def synchronized(func):
 
     func.__lock__ = threading.Lock()

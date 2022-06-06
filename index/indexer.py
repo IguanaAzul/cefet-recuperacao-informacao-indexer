@@ -6,9 +6,14 @@ import os
 
 
 class Cleaner:
-    def __init__(self, stop_words_file: str, language: str,
-                 perform_stop_words_removal: bool, perform_accents_removal: bool,
-                 perform_stemming: bool):
+    def __init__(
+        self,
+        stop_words_file: str,
+        language: str,
+        perform_stop_words_removal: bool,
+        perform_accents_removal: bool,
+        perform_stemming: bool,
+    ):
         self.set_stop_words = self.read_stop_words(stop_words_file)
 
         self.stemmer = SnowballStemmer(language)
@@ -29,7 +34,7 @@ class Cleaner:
     @staticmethod
     def read_stop_words(str_file) -> set:
         set_stop_words = set()
-        with open(str_file, encoding='utf-8') as stop_words_file:
+        with open(str_file, encoding="utf-8") as stop_words_file:
             for line in stop_words_file:
                 arr_words = line.split(",")
                 [set_stop_words.add(word) for word in arr_words]
@@ -49,12 +54,16 @@ class Cleaner:
 
     def preprocess_text(self, text: str) -> str or None:
         return None
+
+
 class HTMLIndexer:
-    cleaner = Cleaner(stop_words_file="stopwords.txt",
-                      language="portuguese",
-                      perform_stop_words_removal=True,
-                      perform_accents_removal=True,
-                      perform_stemming=True)
+    cleaner = Cleaner(
+        stop_words_file="stopwords.txt",
+        language="portuguese",
+        perform_stop_words_removal=True,
+        perform_accents_removal=True,
+        perform_stemming=True,
+    )
 
     def __init__(self, index):
         self.index = index
