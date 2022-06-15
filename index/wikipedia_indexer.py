@@ -1,5 +1,5 @@
-from index.indexer import *
-from index.structure import *
+from index.indexer import HTMLIndexer, Cleaner
+from index.structure import FileIndex
 
 if __name__ == "__main__":
     HTMLIndexer.cleaner = Cleaner(
@@ -9,3 +9,6 @@ if __name__ == "__main__":
         perform_accents_removal=True,
         perform_stemming=False,
     )
+    obj_index = FileIndex()
+    html_indexer = HTMLIndexer(obj_index)
+    html_indexer.index_text_dir("./wiki")

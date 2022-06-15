@@ -187,6 +187,8 @@ class FileIndex(Index):
         self.lst_occurrences_tmp = [None] * (FileIndex.TMP_OCCURRENCES_LIMIT + 1)
         self.idx_file_counter = 0
         self.str_idx_file_name = f"occur_idx_file_{self.idx_file_counter}"
+        with open(f"{self.str_idx_file_name}", "wb") as file:
+            file.write(b"")
 
         # metodos auxiliares para verifica o tamanho da lst_occurrences_tmp
         self.idx_tmp_occur_last_element = -1
@@ -234,12 +236,6 @@ class FileIndex(Index):
         return self.idx_tmp_occur_last_element - self.idx_tmp_occur_first_element + 1
 
     def next_from_file(self, file_pointer) -> TermOccurrence:
-        """
-        bytes_doc_id = file_pointer.read(4)
-        if not bytes_doc_id:
-            return None
-            # seu código aqui :
-        """
         try:
             next_occurrence = pickle.load(file_pointer)
         except:
@@ -256,7 +252,7 @@ class FileIndex(Index):
         # Ordena pelo term_id, doc_id
         #    Para eficiência, todo o código deve ser feito com o garbage collector desabilitado gc.disable()
         gc.disable()
-        # print(f'last:{self.idx_tmp_occur_last_element}')
+
         to_save = self.lst_occurrences_tmp[
             self.idx_tmp_occur_first_element:self.idx_tmp_occur_last_element + 1
         ]
@@ -266,11 +262,11 @@ class FileIndex(Index):
             + to_save
             + self.lst_occurrences_tmp[self.idx_tmp_occur_last_element + 1:]
         )
-        # print (to_save)
+
         tmp_escrita = list(self.str_idx_file_name)
         tmp_escrita[-1] = f"{self.idx_file_counter}"
         escrita = "".join(tmp_escrita)
-        # print(self.str_idx_file_name,escrita)
+
         with open(f"{self.str_idx_file_name}", "rb") as file:
             with open(escrita, "wb") as file_2:
                 next_from_list = self.next_from_list()
