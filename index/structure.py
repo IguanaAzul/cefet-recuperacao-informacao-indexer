@@ -66,7 +66,7 @@ class Index:
         )
 
     def finish_indexing(self):
-        pass
+        self.write("wiki.idx")
 
     def write(self, arq_index: str):
         with open(arq_index, "wb") as f:
@@ -91,9 +91,9 @@ class Index:
 @total_ordering
 class TermOccurrence:
     def __init__(self, doc_id: int, term_id: int, term_freq: int):
-        self.doc_id = doc_id
-        self.term_id = term_id
-        self.term_freq = term_freq
+        self.doc_id = int(doc_id) if type(doc_id) is str else doc_id
+        self.term_id = int(term_id) if type(term_id) is str else term_id
+        self.term_freq = int(term_freq) if type(term_freq) is str else term_freq
 
     def write(self, idx_file):
         """idx_file.write(self.doc_id.to_bytes(4,byteorder="big"))
@@ -181,13 +181,13 @@ class TermFilePosition:
 class FileIndex(Index):
     TMP_OCCURRENCES_LIMIT = 1000000
 
-    def __init__(self):
+    def __init__(self, str_idx_file_name="occur_file"):
         super().__init__()
 
         self.lst_occurrences_tmp = [None] * (FileIndex.TMP_OCCURRENCES_LIMIT + 1)
         self.idx_file_counter = 0
-        self.str_idx_file_name = f"occur_idx_file_{self.idx_file_counter}"
-        with open(f"{self.str_idx_file_name}", "wb") as file:
+        self.str_idx_file_name = str_idx_file_name
+        with open(f"{self.str_idx_file_name}_{self.idx_file_counter}", "wb") as file:
             file.write(b"")
 
         # metodos auxiliares para verifica o tamanho da lst_occurrences_tmp
@@ -220,14 +220,11 @@ class FileIndex(Index):
             self.save_tmp_occurrences()
 
     def next_from_list(self) -> TermOccurrence:
-
         if self.get_tmp_occur_size() > 0:
             # obtenha o proximo da lista e armazene em nex_occur
             # não esqueça de atualizar a(s) variável(is) auxiliares apropriadamente
             next_occur = self.lst_occurrences_tmp[self.idx_tmp_occur_first_element]
             self.idx_tmp_occur_first_element += 1
-            # print(f'first:{self.idx_tmp_occur_first_element}')
-
             return next_occur
         else:
             return None
@@ -254,7 +251,7 @@ class FileIndex(Index):
         gc.disable()
 
         to_save = self.lst_occurrences_tmp[
-            self.idx_tmp_occur_first_element:self.idx_tmp_occur_last_element + 1
+            self.idx_tmp_occur_first_element: self.idx_tmp_occur_last_element + 1
         ]
         to_save.sort()
         self.lst_occurrences_tmp = (
@@ -263,17 +260,17 @@ class FileIndex(Index):
             + self.lst_occurrences_tmp[self.idx_tmp_occur_last_element + 1:]
         )
 
-        tmp_escrita = list(self.str_idx_file_name)
-        tmp_escrita[-1] = f"{self.idx_file_counter}"
-        escrita = "".join(tmp_escrita)
+        leitura = f"{self.str_idx_file_name}_{self.idx_file_counter}"
+        escrita = f"{self.str_idx_file_name}_{self.idx_file_counter + 1}"
 
-        with open(f"{self.str_idx_file_name}", "rb") as file:
+        with open(f"{leitura}", "rb") as file:
             with open(escrita, "wb") as file_2:
                 next_from_list = self.next_from_list()
                 next_from_file = self.next_from_file(file)
-                # print(f'arquivo:{next_from_file},tmp:{next_from_list}')
                 while True:
-                    if next_from_list is None and next_from_file is not None:
+                    if next_from_list is None and next_from_file is None:
+                        break
+                    elif next_from_list is None and next_from_file is not None:
                         while True:
                             if next_from_file is None:
                                 break
@@ -285,8 +282,6 @@ class FileIndex(Index):
                                 break
                         next_from_list.write(file_2)
                         next_from_list = self.next_from_list()
-                    elif next_from_list is None and next_from_file is None:
-                        break
                     else:
                         if next_from_list > next_from_file:
                             next_from_file.write(file_2)
@@ -294,9 +289,7 @@ class FileIndex(Index):
                         else:
                             next_from_list.write(file_2)
                             next_from_list = self.next_from_list()
-            # print(self.idx_tmp_occur_last_element)
         gc.enable()
-        self.str_idx_file_name = escrita
         self.idx_file_counter += 1
         self.idx_tmp_occur_last_element = -1
         self.idx_tmp_occur_first_element = 0
@@ -315,7 +308,7 @@ class FileIndex(Index):
         for str_term, obj_term in self.dic_index.items():
             dic_ids_por_termo[obj_term.term_id] = str_term
 
-        with open(self.str_idx_file_name, "rb") as idx_file:
+        with open(f"{self.str_idx_file_name}_{self.idx_file_counter}", "rb") as idx_file:
             # navega nas ocorrencias para atualizar cada termo em dic_ids_por_termo
             # apropriadamente
 
@@ -334,12 +327,13 @@ class FileIndex(Index):
                 next_from_file = self.next_from_file(idx_file)
                 # occur_idx_file_0 = 376 bytes  para 4 itens, logo cada registro tem 94 bytes
                 seek_file = seek_file + 96
+        self.write("wiki.idx")
 
     def get_occurrence_list(self, term: str) -> List:
         occurrence_list = []
         if term in self.dic_index.keys():
             term_id = self.dic_index[term].term_id
-            idx_file = open(self.str_idx_file_name, "rb")
+            idx_file = open(f"{self.str_idx_file_name}_{self.idx_file_counter}", "rb")
             idx_file.seek(self.dic_index[term].term_file_start_pos)
             next = self.next_from_file(idx_file)
             # enquanto o next tiver o mesmo term_id do passado na busca vai add

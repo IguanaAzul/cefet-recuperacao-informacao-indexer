@@ -6,6 +6,7 @@ from collections import Counter
 import os
 from tqdm import tqdm
 
+
 class Cleaner:
     def __init__(
         self,
@@ -30,7 +31,7 @@ class Cleaner:
         self.perform_stemming = perform_stemming
 
     def html_to_plain_text(self, html_doc: str) -> str:
-        soup = BeautifulSoup(html_doc, 'html.parser')
+        soup = BeautifulSoup(html_doc, "html.parser")
         return soup.get_text()
 
     @staticmethod
@@ -59,7 +60,9 @@ class Cleaner:
             if self.is_stop_word(word) or word in self.set_punctuation:
                 continue
             words.append(
-                self.word_stem(self.remove_accents(word)) if self.perform_stemming else self.remove_accents(word)
+                self.word_stem(self.remove_accents(word))
+                if self.perform_stemming
+                else self.remove_accents(word)
             )
         return words
 
@@ -81,7 +84,9 @@ class HTMLIndexer:
         return dic_word_count
 
     def index_text(self, doc_id: int, text_html: str):
-        for term, term_freq in self.text_word_count(self.cleaner.html_to_plain_text(text_html)).items():
+        for term, term_freq in self.text_word_count(
+            self.cleaner.html_to_plain_text(text_html)
+        ).items():
             self.index.index(term, doc_id, term_freq)
 
     def index_text_dir(self, path: str):
