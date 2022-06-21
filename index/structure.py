@@ -96,10 +96,9 @@ class TermOccurrence:
         self.term_freq = int(term_freq) if type(term_freq) is str else term_freq
 
     def write(self, idx_file):
-        """idx_file.write(self.doc_id.to_bytes(4,byteorder="big"))
-        idx_file.write(self.term_id.to_bytes(4,byteorder="big"))
-        idx_file.write(self.term_freq.to_bytes(4,byteorder="big"))"""
-        pickle.dump(self, idx_file)
+        idx_file.write(self.doc_id.to_bytes(4, byteorder="big"))
+        idx_file.write(self.term_id.to_bytes(4, byteorder="big"))
+        idx_file.write(self.term_freq.to_bytes(4, byteorder="big"))
 
     def __hash__(self):
         return hash((self.doc_id, self.term_id))
@@ -234,14 +233,15 @@ class FileIndex(Index):
 
     def next_from_file(self, file_pointer) -> TermOccurrence:
         try:
-            next_occurrence = pickle.load(file_pointer)
+            doc_id = int.from_bytes(file_pointer.read(4), byteorder="big")
+            term_id = int.from_bytes(file_pointer.read(4), byteorder="big")
+            term_freq = int.from_bytes(file_pointer.read(4), byteorder="big")
+            if doc_id == 0 and term_id == 0 and term_freq == 0:
+                return None
         except:
             return None
-        else:
-            if not next_occurrence:
-                return None
         return TermOccurrence(
-            next_occurrence.doc_id, next_occurrence.term_id, next_occurrence.term_freq
+            doc_id, term_id, term_freq
         )
 
     def save_tmp_occurrences(self):
@@ -278,10 +278,10 @@ class FileIndex(Index):
                             next_from_file = self.next_from_file(file)
                     elif next_from_list is not None and next_from_file is None:
                         while True:
-                            if next_from_file is None:
+                            if next_from_list is None:
                                 break
-                        next_from_list.write(file_2)
-                        next_from_list = self.next_from_list()
+                            next_from_list.write(file_2)
+                            next_from_list = self.next_from_list()
                     else:
                         if next_from_list > next_from_file:
                             next_from_file.write(file_2)
@@ -326,7 +326,7 @@ class FileIndex(Index):
                     self.dic_index[next_term].term_file_start_pos = seek_file
                 next_from_file = self.next_from_file(idx_file)
                 # occur_idx_file_0 = 376 bytes  para 4 itens, logo cada registro tem 94 bytes
-                seek_file = seek_file + 96
+                seek_file = seek_file + 12
         self.write("wiki.idx")
 
     def get_occurrence_list(self, term: str) -> List:

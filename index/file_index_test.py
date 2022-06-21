@@ -19,7 +19,7 @@ class FileIndexTest(unittest.TestCase):
         )
         last_occur = TermOccurrence(float("-inf"), float("-inf"), 10)
         set_file_occurrences = set()
-        with open(obj_index.str_idx_file_name, "rb") as idx_file:
+        with open(f"{obj_index.str_idx_file_name}_{obj_index.idx_file_counter}", "rb") as idx_file:
             occur = obj_index.next_from_file(idx_file)
             while occur is not None:
                 self.assertTrue(
@@ -55,6 +55,7 @@ class FileIndexTest(unittest.TestCase):
             occur1_read = self.index.next_from_file(file)
             occur2_read = self.index.next_from_file(file)
             occur3_read = self.index.next_from_file(file)
+            occur4_read = self.index.next_from_file(file)
             self.assertEqual(
                 occur1,
                 occur1_read,
